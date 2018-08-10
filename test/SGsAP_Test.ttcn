@@ -1,0 +1,1480 @@
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2000-2018 Ericsson Telecom AB
+// All rights reserved. This program and the accompanying materials
+// are made available under the terms of the Eclipse Public License v2.0
+// which accompanies this distribution, and is available at
+// https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
+///////////////////////////////////////////////////////////////////////////////
+//
+//  File:               SGsAP_Test.ttcn
+//  Rev:                <RnXnn>
+//  Prodnr:             CNL 113 834
+//  Contact:            http://ttcn.ericsson.se
+//  Reference:          3GPP TS 29.118 v13.2.0
+//
+
+module SGsAP_Test
+
+{
+
+import from SGsAP_Types all;
+
+type component SGComponent_CT
+{
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_ALERT_ACK:= {
+  sGsAP_ALERT_ACK:={
+    messageType := '00001110'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_ALERT_REJECT:= {
+  sGsAP_ALERT_REJECT:={
+    messageType := '00001111'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause:={
+      iEI:='00001000'B,
+      lengthIndicator:=0,
+      cause:=IMSI_detached_for_EPS_services
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_ALERT_REQUEST:= {
+  sGsAP_ALERT_REQUEST:={
+    messageType := '00001101'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_DOWNLINK_UNITDATA:= {
+  sGsAP_DOWNLINK_UNITDATA:={
+    messageType := '00000111'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200009'H,
+        fillerDigit := omit
+      }
+    },
+    nAS_MessageContainer:={
+      iEI:='00010110'B,
+      lengthIndicator := 0,
+      nAS_MessageContainer:='0704'O
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_EPS_DETACH_ACK:= {
+  sGsAP_EPS_DETACH_ACK:={
+    messageType := '00010010'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200012'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_EPS_DETACH_INDICATION:= {
+  sGsAP_EPS_DETACH_INDICATION:={
+    messageType := '00010001'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200012'H,
+        fillerDigit := omit
+      }
+    },
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    iMSI_DetachFromEPS_ServiceType:={
+      iEI := '00010000'B,
+      lengthIndicator := 0,
+      serviceType:= UE_initiated
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_IMSI_DETACH_ACK:= {
+  sGsAP_IMSI_DETACH_ACK:={
+    messageType := '00010100'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200011'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_IMSI_DETACH_INDICATION:= {
+  sGsAP_IMSI_DETACH_INDICATION:={
+    messageType := '00010011'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200011'H,
+        fillerDigit := omit
+      }
+    },
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    iMSI_DetachFromNonEPS_ServiceType:={
+      iEI := '00010001'B,
+      lengthIndicator := 0,
+      serviceType:= explicit_UE_initiated
+    }
+  }
+}
+
+// Note: If newTMSIorIMSI==omit -> malformed packet according to wireshark
+template PDU_SGsAP t_SGsAP_LOCATION_UPDATE_ACCEPT:= {
+  sGsAP_LOCATION_UPDATE_ACCEPT:={
+    messageType := '00001010'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    locationAreaId := {
+      iEI := '00000100'B,
+      lengthIndicator := 0,
+      locationAreaId := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        lac := '0066'O
+      }
+    },
+    newTMSIorIMSI:={
+      iEI := '00001110'B,
+      lengthIndicator := 0,
+      iD:={
+        typeOfIdentity:='001'B,
+        iD:={imsi:={
+            oddevenIndicator:='1'B,
+            digits:='240f9'H,
+            fillerDigit:=omit
+          } }
+      }
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_LOCATION_UPDATE_ACCEPT_2:={
+  sGsAP_LOCATION_UPDATE_ACCEPT := {
+    messageType := '00001010'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    },
+    locationAreaId := {
+      iEI := '00000100'B,
+      lengthIndicator := 0,
+      locationAreaId := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        lac := '0065'O
+      }
+    },
+    newTMSIorIMSI := {
+      iEI := '00001110'B,
+      lengthIndicator := 0,
+      iD := {
+        typeOfIdentity := '100'B,
+        iD := {
+          tmsi_ptmsi := {
+            oddevenIndicator := '0'B,
+            fillerDigit := '1111'B,
+            octets := '35200010'O
+          }
+        }
+      }
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_LOCATION_UPDATE_REJECT:= {
+  sGsAP_LOCATION_UPDATE_REJECT:={
+    messageType := '00001011'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    rejectCause := {
+      iEI := '00001111'B,
+      lengthIndicator := 0,
+      cause :=IMSI_unknown_in_HLR
+    },
+    locationAreaId := {
+      iEI := '00000100'B,
+      lengthIndicator := 5,
+      locationAreaId := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '6'H,
+        mccDigit3 := '2'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '0'H,
+        mncDigit2 := '2'H,
+        lac := '0001'O } }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_LOCATION_UPDATE_REQUEST:= {
+  sGsAP_LOCATION_UPDATE_REQUEST := {
+    messageType := '00001001'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    ePS_LocationUpdateType := {
+      iEI := '00001010'B,
+      lengthIndicator := 0,
+      locationUpdateType := IMSI_attach
+    },
+    newLocationAreaId := {
+      iEI := '00000100'B,
+      lengthIndicator := 0,
+      locationAreaId := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        lac := '0066'O
+      }
+    },
+    oldLocationAreaId := omit,
+    tMSI_Status := {
+      iEI := '00000111'B,
+      lengthIndicator := 0,
+      status := {
+        tmsiFlag := '0'B,
+        spare := '0000000'B
+      }
+    },
+    iMEI_SV := {
+      iEI := '00010101'B,
+      lengthIndicator := 0,
+      iMEI_SV := '1234567812345612'H
+    },
+    tAI := {
+      iEI := '00100011'B,
+      lengthIndicator := 0,
+      iD := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        tAC := '0066'O
+      }
+
+    },
+    eCGI := {
+      iEI := '00100100'B,
+      lengthIndicator := 0,
+      eCGI := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        spare:='0'H,
+        eCI := 10
+      }
+    },
+    tMSI_NRI := {
+      iEI := '00100111'B,
+      lengthIndicator := 0,
+      nRI_containerIE := {
+        nRI_containerValue := '0111001000'B,
+        spare := '000000'B
+      }
+    },
+    cS_DomainOperator := {
+      iEI := '00011110'B,
+      lengthIndicator := 0,
+      mccDigit1 := '2'H,
+      mccDigit2 := '4'H,
+      mccDigit3 := '0'H,
+      mncDigit3 := 'F'H,
+      mncDigit1 := '9'H,
+      mncDigit2 := '9'H
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_LOCATION_UPDATE_REQUEST_2:= {
+  sGsAP_LOCATION_UPDATE_REQUEST := {
+    messageType := '00001001'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    },
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    ePS_LocationUpdateType := {
+      iEI := '00001010'B,
+      lengthIndicator := 0,
+      locationUpdateType := IMSI_attach
+    },
+    newLocationAreaId := {
+      iEI := '00000100'B,
+      lengthIndicator := 0,
+      locationAreaId := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        lac := '0065'O
+      }
+    },
+    oldLocationAreaId := omit,
+    tMSI_Status := {
+      iEI := '00000111'B,
+      lengthIndicator := 0,
+      status := {
+        tmsiFlag := '0'B,
+        spare := '0000000'B
+      }
+    },
+    iMEI_SV := {
+      iEI := '00010101'B,
+      lengthIndicator := 0,
+      iMEI_SV := '1111111122222233'H
+    },
+    tAI := {
+      iEI := '00100011'B,
+      lengthIndicator := 0,
+      iD := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        tAC := '0066'O
+      }
+
+    },
+    eCGI := {
+      iEI := '00100100'B,
+      lengthIndicator := 0,
+      eCGI := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        spare:='0'H,
+        eCI := 10
+      }
+    },
+    tMSI_NRI := {
+      iEI := '00100111'B,
+      lengthIndicator := 0,
+      nRI_containerIE := {
+        nRI_containerValue := '0111001000'B,
+        spare := '000000'B
+      }
+    },
+    cS_DomainOperator := {
+      iEI := '00011110'B,
+      lengthIndicator := 0,
+      mccDigit1 := '2'H,
+      mccDigit2 := '4'H,
+      mccDigit3 := '0'H,
+      mncDigit3 := 'F'H,
+      mncDigit1 := '9'H,
+      mncDigit2 := '9'H
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_MM_INFORMATION_REQUEST:= {
+  sGsAP_MM_INFORMATION_REQUEST:={
+    messageType := '00011010'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    mM_Information := {
+      iEI := '00010111'B,
+      lengthIndicator := 0,
+      information := '1003'O
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_PAGING_REJECT:= {
+  sGsAP_PAGING_REJECT:={
+    messageType := '00000010'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause := {
+      iEI := '00001000'B,
+      lengthIndicator := 0,
+      cause := IMSI_detached_for_EPS_services
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_PAGING_REQUEST:= {
+  sGsAP_PAGING_REQUEST:={
+    messageType := '00000001'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    vLR_Name := {
+      iEI := '00000010'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    serviceIndicator := {
+      iEI := '00100000'B,
+      lengthIndicator := 0,
+      indicator := CS_call_indicator
+    },
+    tMSI := omit,
+    cLI := omit,
+    locationAreaId := omit,
+    globalCN_Id := omit,
+    sS_Code := omit,
+    lCS_Indicator := omit,
+    lCS_ClientIdentity := omit,
+    channelNeeded := omit,
+    eMLPP_Priority := omit,
+    additionalPagingIndicator := {
+      iEI := '00100110'B,
+      lengthIndicator := 0,
+      spare := '0000000'B,
+      cSRI := '1'B
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_RESET_ACK:= {
+  sGsAP_RESET_ACK:={
+    messageType := '00010110'B,
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    vLR_Name := {
+      iEI := '00000010'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_RESET_INDICATION:= {
+  sGsAP_RESET_INDICATION:={
+    messageType := '00010101'B,
+    mME_Name := {
+      iEI := '00001001'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    },
+    vLR_Name := {
+      iEI := '00000010'B,
+      lengthIndicator := 0,
+      name := "mmec19.mmegi8C33.mme.epc.mnc99.mcc240.3gppnetwork.org"
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_SERVICE_REQUEST:= {
+  sGsAP_SERVICE_REQUEST:={
+    messageType := '00000110'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    serviceIndicator:= {
+      iEI := '00100000'B,
+      lengthIndicator := 0,
+      indicator := CS_call_indicator
+    },
+    iMEI_SV := {
+      iEI := '00010101'B,
+      lengthIndicator := 0,
+      iMEI_SV := '1234567812345612'H
+    },
+    uE_TimeZone := {
+      iEI := '00100001'B,
+      lengthIndicator := 0,
+      uE_TimeZone := '00000001'B
+    },
+    mobileStationClassmark2 := {
+      iEI := '00100010'B,
+      lengthIndicator := 0,
+      mobileStationClassmark2 := {
+        mobileStationClassmark2_oct3:={
+          rf_PowerCapability:='000'B,
+          a5_1:='0'B,
+          esind:='0'B,
+          revisionLevel:='00'B,
+          spare1_1:='0'B
+        },
+        mobileStationClassmark2_oct4:={
+          fc:='0'B,
+          vgcs:='0'B,
+          vbs:='0'B,
+          sm_Capability:='0'B,
+          ss_ScreenIndicator:='00'B,
+          ps_Capability:='0'B,
+          spare2_1:='0'B
+        },
+        mobileStationClassmark2_oct5:={
+          a5_2:='0'B,
+          a5_3:='0'B,
+          cmsp:='0'B,
+          solsa:='0'B,
+          ucs2:='0'B,
+          lcsva_cap:='0'B,
+          spare5_7:='0'B,
+          cm3:='0'B
+        }
+      }
+    },
+    tAI := {
+      iEI := '00100011'B,
+      lengthIndicator := 0,
+      iD := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        tAC := '0066'O
+      }
+    },
+    eCGI := {
+      iEI := '00100100'B,
+      lengthIndicator := 0,
+      eCGI := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        spare:='0'H,
+        eCI := 10
+      }
+    },
+    uE_EMM_Mode:= {
+      iEI := '00100101'B,
+      lengthIndicator := 0,
+      mode := EMM_CONNECTED
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_STATUS:= {
+  sGsAP_STATUS:={
+    messageType := '00011101'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause:={
+      iEI:='00001000'B,
+      lengthIndicator:=0,
+      cause:=IMSI_detached_for_EPS_services
+    },
+    erroneousMessage := {
+      iEI:='00011011'B,
+      lengthIndicator:=0,
+      erroneousMessage:='00000001'O
+    }
+  }
+}
+
+// from Mia Johansson
+template PDU_SGsAP t_SGsAP_TMSI_REALLOCATION_COMPLETE:= {
+  sGsAP_TMSI_REALLOCATION_COMPLETE:={
+    messageType := '00001100'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_UE_ACTIVITY_INDICATION:= {
+  sGsAP_UE_ACTIVITY_INDICATION:={
+    messageType := '00010000'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200010'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_UE_UNREACHABLE:= {
+  sGsAP_UE_UNREACHABLE:={
+    messageType := '00011111'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause:={
+      iEI:='00001000'B,
+      lengthIndicator:=0,
+      cause:=IMSI_detached_for_EPS_services
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_UPLINK_UNITDATA:= {
+  sGsAP_UPLINK_UNITDATA:={
+    messageType := '00001000'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 8,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200009'H,
+        fillerDigit := omit
+      }
+    },
+    nAS_MessageContainer := {
+      iEI := '00010110'B,
+      lengthIndicator := 7,
+      nAS_MessageContainer := '07010411111111'O
+    },
+    iMEI_SV := {
+      iEI := '00010101'B,
+      lengthIndicator := 8,
+      iMEI_SV := '1111111122222233'H
+    },
+    uE_TimeZone := {
+      iEI := '00100001'B,
+      lengthIndicator := 0,
+      uE_TimeZone := '00000011'B
+    },
+    mobileStationClassmark2 := omit,
+    tAI := omit,
+    eCGI := omit
+  }
+}
+
+template PDU_SGsAP t_SGsAP_RELEASE_REQUEST:= {
+  sGsAP_RELEASE_REQUEST:={
+    messageType := '00011011'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause:={
+      iEI:='00001000'B,
+      lengthIndicator:=0,
+      cause:=IMSI_detached_for_EPS_services
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_RELEASE_REQUEST_omitSGsCause:= {
+  sGsAP_RELEASE_REQUEST:={
+    messageType := '00011011'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    sGsCause:=omit
+  }
+}
+
+template PDU_SGsAP t_SGsAP_SERVICE_ABORT_REQUEST:= {
+  sGsAP_SERVICE_ABORT_REQUEST:={
+    messageType := '00011011'B,
+    iMSI := {
+      iEI := '00010111'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    }
+  }
+}
+
+template PDU_SGsAP t_SGsAP_MO_CSFB_INDICATION := {
+  sGsAP_MO_CSFB_INDICATION :={
+    messageType := '00011000'B,
+    iMSI := {
+      iEI := '00000001'B,
+      lengthIndicator := 0,
+      iMSI := {
+        field1 := '001'B,
+        parity := '1'B,
+        digits := '240990135200303'H,
+        fillerDigit := omit
+      }
+    },
+    tAI := {
+      iEI := '00100011'B,
+      lengthIndicator := 0,
+      iD := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        tAC := '0066'O
+      }
+    },
+    eCGI := {
+      iEI := '00100100'B,
+      lengthIndicator := 0,
+      eCGI := {
+        mccDigit1 := '2'H,
+        mccDigit2 := '4'H,
+        mccDigit3 := '0'H,
+        mncDigit3 := 'F'H,
+        mncDigit1 := '9'H,
+        mncDigit2 := '9'H,
+        spare:='0'H,
+        eCI := 10
+      }
+    }
+  }
+}
+
+testcase tc_EncDec_SGsAP_ALERT_ACK() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_ALERT_ACK));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '0E01082904991053020001'O
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_ALERT_REJECT() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_ALERT_REJECT));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_ALERT_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_ALERT_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '0D01082904991053020001'O;
+
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_DOWNLINK_UNITDATA() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_DOWNLINK_UNITDATA));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '070108290499105302009016020704'O;
+
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_EPS_DETACH_ACK() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_EPS_DETACH_ACK));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '1201082904991053020021'O;
+
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_EPS_DETACH_INDICATION() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_EPS_DETACH_INDICATION));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '110108290499105302002109356D6D656331392E6D6D656769384333332E6D6D652E6570632E6D6E6339392E6D63633234302E336770706E6574776F726B2E6F7267100102'O;
+
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_IMSI_DETACH_ACK() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_IMSI_DETACH_ACK));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '1401082904991053020011'O;
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_IMSI_DETACH_INDICATION() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_IMSI_DETACH_INDICATION));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '130108290499105302001109356D6D656331392E6D6D656769384333332E6D6D652E6570632E6D6E6339392E6D63633234302E336770706E6574776F726B2E6F7267110101'O;
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_LOCATION_UPDATE_ACCEPT() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_LOCATION_UPDATE_ACCEPT));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_LOCATION_UPDATE_ACCEPT_2() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_LOCATION_UPDATE_ACCEPT_2));
+  // from Mia Johansson
+  var octetstring v_my_oct2:= '0A01082904991053020001040542F09900650E05F435200010'O;
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_LOCATION_UPDATE_REJECT() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_LOCATION_UPDATE_REJECT));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_LOCATION_UPDATE_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_LOCATION_UPDATE_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_LOCATION_UPDATE_REQUEST_2() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_LOCATION_UPDATE_REQUEST_2));
+  var octetstring v_my_oct2:= '090108290499105302000109356D6D656331392E6D6D656769384333332E6D6D652E6570632E6D6E6339392E6D63633234302E336770706E6574776F726B2E6F72670A0101040542F099006507010015081111111122222233230542F0990066240742F0990000000A270213801E0342F099'O;
+  /*    nRI_containerValue := '0111001000'B,   00010011 10000000 
+        spare := '000000'B */
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_MM_INFORMATION_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_MM_INFORMATION_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_PAGING_REJECT() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_PAGING_REJECT));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_PAGING_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_PAGING_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_RESET_ACK() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_RESET_ACK));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_RESET_INDICATION() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_RESET_INDICATION));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_SERVICE_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_SERVICE_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_STATUS() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_STATUS));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) } else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_TMSI_REALLOCATION_COMPLETE() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_TMSI_REALLOCATION_COMPLETE));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '0C01082904991053020001'O;
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_UE_ACTIVITY_INDICATION() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_UE_ACTIVITY_INDICATION));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+  // from Mia Johansson
+  var octetstring v_my_oct3:= '1001082904991053020001'O;
+  if ((v_my_oct == v_my_oct2) and (v_my_oct == v_my_oct3))
+  { setverdict(pass) } else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_UE_UNREACHABLE() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_UE_UNREACHABLE));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) }else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_UPLINK_UNITDATA() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_UPLINK_UNITDATA));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  { setverdict(pass) } else {setverdict(fail)}
+}
+
+testcase tc_EncDec_SGsAP_RELEASE_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_RELEASE_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  {
+    setverdict(pass)
+  } else {
+    setverdict(fail);
+  }
+}
+
+testcase tc_EncDec_SGsAP_RELEASE_REQUEST_artf441921() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_RELEASE_REQUEST_omitSGsCause));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  {
+    setverdict(pass)
+  } else {
+    setverdict(fail);
+  }
+}
+
+testcase tc_EncDec_SGsAP_SERVICE_ABORT_REQUEST() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_SERVICE_ABORT_REQUEST));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  {
+    setverdict(pass)
+  } else {
+    setverdict(fail);
+  }
+}
+
+testcase tc_EncDec_SGsAP_MO_CSFB_INDICATION() runs on SGComponent_CT {
+  var octetstring v_my_oct := enc_PDU_SGsAP(valueof(t_SGsAP_MO_CSFB_INDICATION));
+
+  var PDU_SGsAP v_PDU := dec_PDU_SGsAP(v_my_oct);
+  log("DECODED:");
+  log (v_PDU);
+
+  var octetstring v_my_oct2:= enc_PDU_SGsAP(v_PDU);
+  log(v_my_oct);
+  log(v_my_oct2);
+
+  if (v_my_oct == v_my_oct2)
+  {
+    setverdict(pass)
+  } else {
+    setverdict(fail);
+  }
+}
+
+testcase tc_HN25015() runs on SGComponent_CT {
+  var octetstring v_my_oct :='01010829262001030000150200200102040562F2200001'O
+  var PDU_SGsAP vl_PDU := dec_PDU_SGsAP(v_my_oct);
+  var PDU_SGsAP vl_expectedPDU:= {
+    sGsAP_PAGING_REQUEST := {
+      messageType := '00000001'B,
+      iMSI := {
+        iEI := '00000001'B,
+        lengthIndicator := 8,
+        iMSI := {
+          field1 := '001'B,
+          parity := '1'B,
+          digits := '262021030000051'H,
+          fillerDigit := omit } },
+      vLR_Name := {
+        iEI := '00000010'B,
+        lengthIndicator := 0,
+        name := "" },
+      serviceIndicator := {
+        iEI := '00100000'B,
+        lengthIndicator := 1,
+        indicator := SMS_indicator },
+      tMSI := omit,
+      cLI := omit,
+      locationAreaId := {
+        iEI := '00000100'B,
+        lengthIndicator := 5,
+        locationAreaId := {
+          mccDigit1 := '2'H,
+          mccDigit2 := '6'H,
+          mccDigit3 := '2'H,
+          mncDigit3 := 'F'H,
+          mncDigit1 := '0'H,
+          mncDigit2 := '2'H,
+          lac := '0001'O } },
+      globalCN_Id := omit,
+      sS_Code := omit,
+      lCS_Indicator := omit,
+      lCS_ClientIdentity := omit,
+      channelNeeded := omit,
+      eMLPP_Priority := omit,
+      additionalPagingIndicator := omit
+    }
+  }
+
+  if(match(vl_PDU,vl_expectedPDU))
+  {
+    setverdict(pass)
+  } else {
+    setverdict(fail, match(vl_PDU,vl_expectedPDU))
+  }
+
+}
+
+
+
+testcase FastEncDecTC () runs on SGComponent_CT {
+  var PDU_SGsAP sgsap:={sGsAP_ALERT_ACK:={'00001110'B, {'00000001'B, 1, {'001'B,'0'B,'D'H,omit}}}};
+  log (sgsap);
+  var octetstring enc_sgsap;
+  enc_PDU_SGsAP_fast (sgsap, enc_sgsap);
+  log (enc_sgsap);
+  var PDU_SGsAP dec_sgsap;
+  var integer success:=dec_PDU_SGsAP_backtrack(enc_sgsap, dec_sgsap);
+  log (dec_sgsap);
+  if ((dec_sgsap==sgsap) and (success==0)) {
+    setverdict(pass);
+  }
+  else {
+    setverdict(fail)
+  }
+}
+
+
+control
+{
+  execute(tc_EncDec_SGsAP_ALERT_ACK());
+  execute(tc_EncDec_SGsAP_ALERT_REJECT());
+  execute(tc_EncDec_SGsAP_ALERT_REQUEST());
+  execute(tc_EncDec_SGsAP_DOWNLINK_UNITDATA());
+  execute(tc_EncDec_SGsAP_EPS_DETACH_ACK());
+  execute(tc_EncDec_SGsAP_EPS_DETACH_INDICATION());
+  execute(tc_EncDec_SGsAP_IMSI_DETACH_ACK());
+  execute(tc_EncDec_SGsAP_IMSI_DETACH_INDICATION());
+  execute(tc_EncDec_SGsAP_LOCATION_UPDATE_ACCEPT());
+  execute(tc_EncDec_SGsAP_LOCATION_UPDATE_ACCEPT_2());
+  execute(tc_EncDec_SGsAP_LOCATION_UPDATE_REJECT());
+  execute(tc_EncDec_SGsAP_LOCATION_UPDATE_REQUEST());
+  execute(tc_EncDec_SGsAP_LOCATION_UPDATE_REQUEST_2());
+  execute(tc_EncDec_SGsAP_MM_INFORMATION_REQUEST());
+  execute(tc_EncDec_SGsAP_PAGING_REJECT());
+  execute(tc_EncDec_SGsAP_PAGING_REQUEST());
+  execute(tc_EncDec_SGsAP_RESET_ACK());
+  execute(tc_EncDec_SGsAP_RESET_INDICATION());
+  execute(tc_EncDec_SGsAP_SERVICE_REQUEST());
+  execute(tc_EncDec_SGsAP_STATUS());
+  execute(tc_EncDec_SGsAP_TMSI_REALLOCATION_COMPLETE());
+  execute(tc_EncDec_SGsAP_UE_ACTIVITY_INDICATION());
+  execute(tc_EncDec_SGsAP_UE_UNREACHABLE());
+  execute(tc_EncDec_SGsAP_UPLINK_UNITDATA());
+  execute(tc_EncDec_SGsAP_RELEASE_REQUEST());
+  execute(tc_EncDec_SGsAP_RELEASE_REQUEST_artf441921());
+  execute(tc_HN25015());
+  execute(FastEncDecTC());
+  execute(tc_EncDec_SGsAP_MO_CSFB_INDICATION());
+  execute(tc_EncDec_SGsAP_SERVICE_ABORT_REQUEST());
+  }
+
+
+}// end of module

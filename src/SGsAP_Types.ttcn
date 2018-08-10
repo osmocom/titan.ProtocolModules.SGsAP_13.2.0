@@ -1,0 +1,1083 @@
+///////////////////////////////////////////////////////////////////////////////
+// Copyright (c) 2000-2018 Ericsson Telecom AB
+// All rights reserved. This program and the accompanying materials
+// are made available under the terms of the Eclipse Public License v2.0
+// which accompanies this distribution, and is available at
+// https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html
+///////////////////////////////////////////////////////////////////////////////
+//
+//  File:               SGsAP_Types.ttcn
+//  Rev:                <RnXnn>
+//  Prodnr:             CNL 113 834
+//  Contact:            http://ttcn.ericsson.se
+//  Reference:          3GPP TS 29.118 v13.2.0
+//
+
+module SGsAP_Types
+{
+import from General_Types all;
+
+external function enc_PDU_SGsAP(in PDU_SGsAP pdu) return octetstring
+with { extension "prototype(convert)" extension "encode(RAW)" }
+
+external function dec_PDU_SGsAP(in octetstring stream) return PDU_SGsAP
+with { extension "prototype(convert)" extension "decode(RAW)" }
+
+external function enc_PDU_SGsAP_fast(in PDU_SGsAP pdu, out octetstring stream)
+with { extension "prototype(fast) encode(RAW)" };
+
+external function dec_PDU_SGsAP_backtrack(in octetstring stream, out PDU_SGsAP pdu) return integer
+with { extension "prototype(backtrack) decode(RAW)" };
+
+
+// 9.4.1
+type record CLI_Value
+{
+  BIT4          numberingPlanId,
+  BIT3          typeOfNumber,
+  BIT1          extensionBit,
+  BIT2          screeningIndicator optional,
+  BIT3          spare optional, //'000'
+  BIT2          presentationIndicator optional,
+  BIT1          extensionBit2 optional,  //'1'B
+  hexstring     digits optional
+} with {
+  variant (screeningIndicator,spare,presentationIndicator,extensionBit2)"PRESENCE(extensionBit = '0'B)";
+  variant "PADDING(yes)";
+  variant "PADDING_PATTERN('1111'B)"
+}
+
+type record CLI
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  CLI_Value              cLI
+} with {
+  variant "PRESENCE (iEI = '00011100'B)";
+  variant (lengthIndicator) "LENGTHTO (cLI)"
+};
+
+// 9.4.2
+type record EPS_LocationUpdateType
+{
+  BIT8                        iEI,
+  LIN1                        lengthIndicator,
+  EPS_location_update_type    locationUpdateType
+} with {
+  variant "PRESENCE (iEI = '00001010'B)";
+  variant (lengthIndicator) "LENGTHTO (locationUpdateType)"
+};
+
+
+type enumerated EPS_location_update_type
+{
+  unused_value_0         (0),
+  IMSI_attach            (1),
+  Normal_location_update (2),
+  unused_value_3         (3)
+} with { variant "FIELDLENGTH(8)"; }
+
+
+// 9.4.3
+type record ErroneousMessage
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  octetstring            erroneousMessage
+} with {
+  variant "PRESENCE (iEI = '00011011'B)";
+  variant (lengthIndicator) "LENGTHTO (erroneousMessage)"
+};
+
+// 9.4.3a
+type record ECGI
+{
+  HEX1                         mccDigit1,
+  HEX1                         mccDigit2,
+  HEX1                         mccDigit3,
+  HEX1                         mncDigit3,
+  HEX1                         mncDigit1,
+  HEX1                         mncDigit2,
+  HEX1                         spare,     
+  integer                      eCI
+} with {
+  variant (spare,eCI) "FIELDORDER(msb)";     
+  variant(eCI) "FIELDLENGTH(28)";
+  variant (eCI) "BYTEORDER(last)";
+};
+
+type record E_UTRAN_CellGlobalIdentity   //ECGI
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  ECGI                   eCGI
+} with {
+  variant "PRESENCE (iEI = '00100100'B)";
+  variant (lengthIndicator) "LENGTHTO (eCGI)"
+};
+
+// 9.4.4
+type record  GlobalCN_IdValue
+{
+  HEX1                         mccDigit1,
+  HEX1                         mccDigit2,
+  HEX1                         mccDigit3,
+  HEX1                         mncDigit3,
+  HEX1                         mncDigit1,
+  HEX1                         mncDigit2,
+  integer                      cN_ID
+} with {
+  variant(cN_ID) "FIELDLENGTH(16)";
+  variant (cN_ID) "BYTEORDER(last)";
+};
+
+type record GlobalCN_Id
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  GlobalCN_IdValue       iD
+} with {
+  variant "PRESENCE (iEI = '00001011'B)";
+  variant (lengthIndicator) "LENGTHTO (iD)"
+};
+
+
+// 9.4.5
+type record IMEI_SV
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  hexstring              iMEI_SV length(16)
+} with {
+  variant "PRESENCE (iEI = '00010101'B)";
+  variant (lengthIndicator) "LENGTHTO (iMEI_SV)"
+};
+
+// 9.4.6
+type record IMSI_Value
+{
+  BIT3               field1, //'001'B
+  BIT1               parity,
+  hexstring          digits,
+  BIT4               fillerDigit optional
+} with {
+  variant (fillerDigit) "PRESENCE (parity = '0'B)";
+}
+
+type record IMSI
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  IMSI_Value             iMSI
+} with {
+  variant "PRESENCE (iEI = '00000001'B)";
+  variant (lengthIndicator) "LENGTHTO (iMSI)"
+};
+
+type record IMSI_LV
+{
+  LIN1                   lengthIndicator,
+  IMSI_Value             iMSI
+} with {
+  variant (lengthIndicator) "LENGTHTO (iMSI)"
+};
+
+// 9.4.7
+type record IMSI_DetachFromEPS_ServiceType
+{
+  BIT8                           iEI,
+  LIN1                           lengthIndicator,
+  IMSI_detachFromEPS_serviceType serviceType
+} with {
+  variant "PRESENCE (iEI = '00010000'B)";
+  variant (lengthIndicator) "LENGTHTO (serviceType)"
+};
+
+type enumerated IMSI_detachFromEPS_serviceType
+{
+  reserved_value_0          (0),
+  network_initiated         (1),
+  UE_initiated              (2),
+  EPS_services_not_allowed  (3),
+  reserved_value_4          (4)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.8
+type record IMSI_DetachFromNonEPS_ServiceType
+{
+  BIT8                               iEI,
+  LIN1                               lengthIndicator,
+  IMSI_detachFromNonEPS_serviceType  serviceType
+} with {
+  variant "PRESENCE (iEI = '00010001'B)";
+  variant (lengthIndicator) "LENGTHTO (serviceType)"
+};
+
+type enumerated IMSI_detachFromNonEPS_serviceType
+{
+  reserved_value_0            (0),
+  explicit_UE_initiated       (1),
+  combined_UE_initiated       (2),
+  implicit_network_initiated  (3),
+  reserved_value_4            (4)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.9
+type record LCS_ClientIdentity
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  octetstring            clientId
+} with {
+  variant "PRESENCE (iEI = '00011101'B)";
+  variant (lengthIndicator) "LENGTHTO (clientId)"
+};
+
+// 9.4.10
+type record LCS_Indicator
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  LCS_indicator          indicator
+} with {
+  variant "PRESENCE (iEI = '00011110'B)";
+  variant (lengthIndicator) "LENGTHTO (indicator)"
+};
+
+type enumerated LCS_indicator
+{
+  unspecified_value_0  (0),
+  MT_LR                (1),
+  unspecified_value_2  (2)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.11
+type record  LocationAreaIdValue
+{
+  HEX1                         mccDigit1,
+  HEX1                         mccDigit2,
+  HEX1                         mccDigit3,
+  HEX1                         mncDigit3,
+  HEX1                         mncDigit1,
+  HEX1                         mncDigit2,
+  OCT2                         lac
+}
+
+type record LocationAreaId
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  LocationAreaIdValue    locationAreaId
+} with {
+  variant "PRESENCE (iEI = '00000100'B)";
+  variant (lengthIndicator) "LENGTHTO (locationAreaId)"
+};
+
+// 9.4.12
+type record MM_Information
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  octetstring            information
+} with {
+  variant "PRESENCE (iEI = '00010111'B)";
+  variant (lengthIndicator) "LENGTHTO (information)"
+};
+
+// 9.4.13
+type record MME_Name
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  charstring             name
+} with {
+  variant "PRESENCE (iEI = '00001001'B)";
+  variant (lengthIndicator) "LENGTHTO (name)"
+};
+
+// 9.4.14
+type record MobileIdentityValue
+{
+  BIT3                         typeOfIdentity,
+  OddEvenInd_Identity_SGsAP    iD
+} with {
+  variant (iD) "CROSSTAG
+  (
+  imei,                     typeOfIdentity ='010'B;
+  imsi,                     typeOfIdentity ='001'B;
+  imei_sv,                  typeOfIdentity ='011'B;
+  tmsi_ptmsi,               typeOfIdentity ='100'B;
+  tmgi_and_MBMS_SessionID,  typeOfIdentity ='101'B;
+  no_identity,              typeOfIdentity ='000'B;
+  )"
+};
+
+type union OddEvenInd_Identity_SGsAP
+{
+  IMSI_SGsAP                      imsi,
+  IMEI_SGsAP                      imei,
+  IMEI_SV_SGsAP                   imei_sv,
+  TMSI_PTMSI_SGsAP                tmsi_ptmsi,
+  TMGI_and_MBMS_SessionID_SGsAP   tmgi_and_MBMS_SessionID,
+  No_Identity_SGsAP               no_identity
+};
+
+type record IMSI_SGsAP
+{
+  BIT1               oddevenIndicator,       // '1'B or '0'B
+  hexstring          digits  length(5..15),
+  BIT4               fillerDigit  optional   // B'1111, fillerDigit is present if oddevenIndicator=0
+} with{
+  variant (fillerDigit) "PRESENCE (oddevenIndicator   = '0'B) ";
+};
+
+type record IMEI_SGsAP
+{
+  BIT1               oddevenIndicator,   // '1'B
+  hexstring          digits  length(15)
+};
+
+type record TMSI_PTMSI_SGsAP
+{
+  BIT1               oddevenIndicator, // '0'B
+  BIT4               fillerDigit, // B'1111
+  OCT4               octets
+};
+
+type record IMEI_SV_SGsAP
+{
+  BIT1               oddevenIndicator,  // '0'B
+  hexstring          digits length(16),
+  BIT4               fillerDigit    // filler '1111'B
+};
+
+type record TMGI_and_MBMS_SessionID_SGsAP
+{
+  BIT1               oddevenIndicator,
+  BIT1               mCC_MNCIndicator,  // 1: present
+  BIT1               mBMS_SessionIdentityIndicator,  // 1: present
+  BIT2               spare,
+  OCT3               mBMS_ServiceID,
+  HEX1               mccDigit1 optional,
+  HEX1               mccDigit2 optional,
+  HEX1               mccDigit3 optional,
+  HEX1               mncDigit3 optional,
+  HEX1               mncDigit1 optional,
+  HEX1               mncDigit2 optional,
+  OCT1               mBMS_SessionIdentity optional
+} with {
+  variant (mccDigit1,mccDigit2,mccDigit3,mncDigit3,mncDigit1,mncDigit2) "PRESENCE(mCC_MNCIndicator = '1'B)";
+  variant (mBMS_SessionIdentity) "PRESENCE(mBMS_SessionIdentityIndicator = '1'B)";
+};
+
+type record No_Identity_SGsAP
+{
+  BIT1               oddevenIndicator,  // '0'B (guessed)
+  hexstring          fillerDigits length(5) // length to be "3" if the GMM identification procedure is used
+};
+
+type record MobileIdentity
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  MobileIdentityValue    iD
+} with {
+  variant "PRESENCE (iEI = '00001110'B)";
+  variant (lengthIndicator) "LENGTHTO (iD)"
+};
+
+// 9.4.14a
+type record MobileStationClassmark2_oct3
+{
+  BIT3  rf_PowerCapability, // '000'B class1
+  // '001'B class2
+  // '010'B class3
+  // '011'B class4
+  // '100'B class5
+  // '111'B RF Power capability is irrelevant in this information element
+  BIT1  a5_1, // '0'B encryption algorithm A5/1 available
+  // '1'B encryption algorithm A5/1 not available
+  BIT1  esind,
+  // '0'B "Controlled Early Classmark Sending" option is not implemented in the MS
+  // '1'B "Controlled Early Classmark Sending" option is implemented in the MS
+  BIT2  revisionLevel,
+  // '00'B reserved for GSM phase 1
+  // '01'B used by GSM phase2 MSs
+  // '10'B used by mobile stations supporting R99 or later versions of the protocol
+  // '11'B reserved for future use
+  BIT1  spare1_1 // '0'B
+}
+
+type record MobileStationClassmark2_oct4
+{
+  BIT1  fc,  // '0'B The MS does not support the E-GSM or R-GSM band
+  // '1'B The MS does support the E-GSM or R-GSM
+  BIT1  vgcs,// '0'B no VGCS capability or no notifications wanted
+  // '1'B VGCS capability and notifications wanted
+  BIT1  vbs, // '0'B no VBS capability or no notifications wanted
+  // '1'B VBS capability and notifications wanted
+  BIT1  sm_Capability, // '0'B Mobile station does not support mobile terminated point to point SMS
+  // '1'B Mobile station supports mobile terminated point to point SMS
+  BIT2 ss_ScreenIndicator,
+  // '00'B default value of phase1
+  // '01'B capability of handling of notation ellipsis and phase 2 error handling
+  // '10'B for future use
+  // '11'B for use  future
+  BIT1  ps_Capability, // '0'B  PS capability not present
+  // '1'B  PS capability present
+  BIT1  spare2_1   // '0'B
+}
+
+type record MobileStationClassmark2_oct5
+{
+  BIT1  a5_2, // '0'B encryption algorithm A5/2 not available
+  // '1'B Not used. This value was allocated in earlier versions of the protocol
+  BIT1  a5_3, // '0'B encryption algorithm A5/3 not available
+  // '1'B encryption algorithm A5/3 available
+  BIT1  cmsp, // CM Service Prompt
+  // '0'B "Network initiated MO CM connection request" not supported
+  // '1'B "Network initiated MO CM connection request" supported for at least one CM protocol
+  BIT1  solsa,// '0'B The ME does not support SoLSA
+  // '1'B The ME supports SoLSA
+  BIT1  ucs2, // '0'B the ME has a preference for the default alphabet
+  // '1'B the ME has no preference between the use of the default alphabet and the use of UCS2
+  BIT1  lcsva_cap,// '0'B location request notification via CS domain not supported
+  // '1'B location request notification via CS domain supported
+  BIT1  spare5_7, // '0'B
+  BIT1  cm3       // '0'B The MS does not support any options that are indicated in CM3
+  // '1'B The MS supports options that are indicated in classmark 3 IE
+}
+
+type record MobileStationClassmark2Value
+{
+  MobileStationClassmark2_oct3    mobileStationClassmark2_oct3,
+  MobileStationClassmark2_oct4    mobileStationClassmark2_oct4,
+  MobileStationClassmark2_oct5    mobileStationClassmark2_oct5
+}
+
+type record MobileStationClassmark2
+{
+  BIT8                          iEI,
+  LIN1                          lengthIndicator,
+  MobileStationClassmark2Value  mobileStationClassmark2
+} with {
+  variant "PRESENCE (iEI = '00100010'B)";
+  variant (lengthIndicator) "LENGTHTO (mobileStationClassmark2)"
+};
+
+// 9.4.15
+type record NAS_MessageContainer
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  octetstring            nAS_MessageContainer // use enc/dec from MobileL3
+} with {
+  variant "PRESENCE (iEI = '00010110'B)";
+  variant (lengthIndicator) "LENGTHTO (nAS_MessageContainer)"
+};
+
+// 9.4.16
+type record RejectCause
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  Reject_Cause           cause
+} with {
+  variant "PRESENCE (iEI = '00001111'B)";
+  variant (lengthIndicator) "LENGTHTO (cause)"
+};
+
+type enumerated Reject_Cause
+{
+  IMSI_unknown_in_HLR       (2),
+  Illegal_MS                (3),
+  IMSI_unknown_in_VLR       (4),
+  IMEI_not_accepted         (5),
+  Illegal_ME                (6),
+  PLMN_not_allowed          (11),
+  Location_Area_not_allowed (12),
+  Roaming_not_allowed_in_this_location_area (13),
+  No_Suitable_Cells_In_Location_Area (15),
+  Network_failure           (17),
+  MAC_failure               (20),
+  Synch_failure             (21),
+  Congestion                (22),
+  GSM_authentication_unacceptable         (23),
+  Not_authorized_for_this_CSG             (25),
+  Service_option_not_supported            (32),
+  Requested_service_option_not_subscribed (33),
+  Service_option_temporarily_out_of_order (34),
+  Call_cannot_be_identified               (38),
+  retry_upon_entry_into_new_cell_48       (48),
+  retry_upon_entry_into_new_cell_49       (49),
+  retry_upon_entry_into_new_cell_50       (50),
+  retry_upon_entry_into_new_cell_51       (51),
+  retry_upon_entry_into_new_cell_52       (52),
+  retry_upon_entry_into_new_cell_53       (53),
+  retry_upon_entry_into_new_cell_54       (54),
+  retry_upon_entry_into_new_cell_55       (55),
+  retry_upon_entry_into_new_cell_56       (56),
+  retry_upon_entry_into_new_cell_57       (57),
+  retry_upon_entry_into_new_cell_58       (58),
+  retry_upon_entry_into_new_cell_59       (59),
+  retry_upon_entry_into_new_cell_60       (60),
+  retry_upon_entry_into_new_cell_61       (61),
+  retry_upon_entry_into_new_cell_62       (62),
+  retry_upon_entry_into_new_cell_63       (63),
+  Semantically_incorrect_message          (95),
+  Invalid_mandatory_information           (96),
+  Message_type_non_existent_or_not_implemented  (97),
+  Message_type_not_compatible_with_protocol_state (98),
+  IE_non_existent_or_not_implemented (99),
+  Conditional_IE_error      (100),
+  Message_not_compatible_with_protocol_state  (101),
+  Protocol_error_unspecified              (111)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.17
+type record ServiceIndicator
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  Service_Indicator      indicator
+} with {
+  variant "PRESENCE (iEI = '00100000'B)";
+  variant (lengthIndicator) "LENGTHTO (indicator)"
+};
+
+type enumerated Service_Indicator
+{
+  unused_value_0         (0),
+  CS_call_indicator      (1),
+  SMS_indicator          (2),
+  unused_value_3         (3)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.18
+type record SGsCause
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  SGs_Cause              cause
+} with {
+  variant "PRESENCE (iEI = '00001000'B)";
+  variant (lengthIndicator) "LENGTHTO (cause)"
+};
+
+type enumerated SGs_Cause
+{
+  unspecified_value_0                                (0),
+  IMSI_detached_for_EPS_services                     (1),
+  IMSI_detached_for_EPS_nonEPS_services              (2),
+  IMSI_unknown                                       (3),
+  IMSI_detached_for_nonEPS_services                  (4),
+  IMSI_implicitly_detached_for_nonEPS_services       (5),
+  UE_unreachable                                     (6),
+  message_not_compatible                             (7),
+  missing_mandatory_IE                               (8),
+  invalid_mandatory_information                      (9),
+  conditional_information_element_error              (10),
+  semantically_incorrect_message                     (11),
+  message_unknown                                    (12),
+  user_rejected_mobile_terminating_CS_fallback_call  (13),
+  unspecified_value_14                               (14)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.19
+type record SS_Code
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  octetstring            code
+} with {
+  variant "PRESENCE (iEI = '00011111'B)";
+  variant (lengthIndicator) "LENGTHTO (code)"
+};
+
+// 9.4.20
+type record TMSI
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  OCT4                   tMSI
+} with {
+  variant "PRESENCE (iEI = '00000011'B)";
+  variant (lengthIndicator) "LENGTHTO (tMSI)"
+};
+
+// 9.4.21
+type record TMSI_StatusValue
+{
+  BIT1               tmsiFlag,
+  BIT7               spare      // '0000000'B
+}
+
+type record TMSI_Status
+{
+  BIT8                   iEI,
+  LIN1                   lengthIndicator,
+  TMSI_StatusValue       status
+} with {
+  variant "PRESENCE (iEI = '00000111'B)";
+  variant (lengthIndicator) "LENGTHTO (status)"
+};
+
+// 9.4.21a
+type record TrackingAreaIdentityValue
+{
+  HEX1        mccDigit1,
+  HEX1        mccDigit2,
+  HEX1        mccDigit3,
+  HEX1        mncDigit3,
+  HEX1        mncDigit1,
+  HEX1        mncDigit2,
+  OCT2        tAC
+}
+
+type record TrackingAreaIdentity
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  TrackingAreaIdentityValue  iD
+} with {
+  variant "PRESENCE (iEI = '00100011'B)";
+  variant (lengthIndicator) "LENGTHTO (iD)"
+};
+
+// 9.4.21b
+type record UE_TimeZone
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  BIT8                       uE_TimeZone
+} with {
+  variant "PRESENCE (iEI = '00100001'B)";
+  variant (lengthIndicator) "LENGTHTO (uE_TimeZone)"
+};
+
+// 9.4.21c
+type record UE_EMM_Mode
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  UE_EMM_mode                mode
+} with {
+  variant "PRESENCE (iEI = '00100101'B)";
+  variant (lengthIndicator) "LENGTHTO (mode)"
+};
+
+type enumerated UE_EMM_mode
+{
+  EMM_IDLE           (0),
+  EMM_CONNECTED      (1),
+  reserved_value_2   (2)
+} with { variant "FIELDLENGTH(8)"; }
+
+// 9.4.22
+type record VLR_Name
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  charstring                 name
+} with {
+  variant "PRESENCE (iEI = '00000010'B)";
+  variant (lengthIndicator) "LENGTHTO (name)"
+};
+
+// 9.4.23
+type record ChannelNeededValue
+{
+  BIT2                    firstChannel,
+  BIT2                    secondChannel,
+  BIT4                    channelNeededIEI   //'1110'O according to 44.018 Annex K2
+}
+
+type record ChannelNeeded
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  ChannelNeededValue         channelNeeded
+} with {
+  variant "PRESENCE (iEI = '00000101'B)";
+  variant (lengthIndicator) "LENGTHTO (channelNeeded)"
+};
+
+// 9.4.24
+type record EMLPP_PriorityValue
+{
+  BIT3                      callPriority,
+  BIT5                      spare
+}
+
+type record EMLPP_Priority
+{
+  BIT8                       iEI,
+  LIN1                       lengthIndicator,
+  EMLPP_PriorityValue        priority
+} with {
+  variant "PRESENCE (iEI = '00000110'B)";
+  variant (lengthIndicator) "LENGTHTO (priority)"
+};
+
+// 9.4.25
+type record AdditionalPagingIndicators
+{
+  BIT8          iEI,
+  LIN1          lengthIndicator,
+  BIT7          spare,
+  BIT1          cSRI  // CS restoration indicator (CSRI): 0 not set: 1 set
+} with {
+  variant "PRESENCE (iEI = '00100110'B)";
+  variant (spare,cSRI) "FIELDORDER(msb)";
+  variant (lengthIndicator) "LENGTHTO (spare, cSRI)"
+};
+
+// 9.4.26
+// Defined in 18.4.28 TS29.018 v.13.2.0
+type record TMSI_basedNRI
+{
+  BIT8                                  iEI,
+  LIN1                                  lengthIndicator,
+  NetworkResourceIdentifierContainer    nRI_containerIE
+} with {
+  variant "PRESENCE (iEI = '00100111'B)";
+  variant (lengthIndicator) "LENGTHTO (nRI_containerIE)"
+};
+
+// Defined in 24.008 v.13.4.0
+type record NetworkResourceIdentifierContainer
+{
+  BIT10                  nRI_containerValue,
+  BIT6                   spare	// '000000'B
+} with {
+  variant (nRI_containerValue) "BITORDER(msb)";
+  variant (nRI_containerValue,spare) "FIELDORDER(msb)"
+};
+
+// 9.4.27
+type record CS_DomainOperator
+{
+  BIT8                        iEI,
+  LIN1                        lengthIndicator,
+  HEX1                        mccDigit1,
+  HEX1                        mccDigit2,
+  HEX1                        mccDigit3,
+  HEX1                        mncDigit3,
+  HEX1                        mncDigit1,
+  HEX1                        mncDigit2
+} with {
+  variant "PRESENCE (iEI = '00011110'B)"; // TODO FIXME: dummy value, standard does not define it
+  variant (lengthIndicator) "LENGTHTO (mccDigit1, mccDigit2, mccDigit3, mncDigit3, mncDigit1, mncDigit2)"
+};
+
+// 8.1
+type record SGsAP_ALERT_ACK
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00001110'B)";
+}
+// 8.2
+type record SGsAP_ALERT_REJECT
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  SGsCause                     sGsCause
+} with {
+  variant "PRESENCE (messageType = '00001111'B)";
+}
+
+// 8.3
+type record SGsAP_ALERT_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00001101'B)";
+}
+
+// 8.4
+type record SGsAP_DOWNLINK_UNITDATA
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  NAS_MessageContainer         nAS_MessageContainer
+} with {
+  variant "PRESENCE (messageType = '00000111'B)";
+}
+
+// 8.5
+type record SGsAP_EPS_DETACH_ACK
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00010010'B)";
+}
+
+// 8.6
+type record SGsAP_EPS_DETACH_INDICATION
+{
+  BIT8                                messageType,
+  IMSI                                iMSI,
+  MME_Name                            mME_Name,
+  IMSI_DetachFromEPS_ServiceType      iMSI_DetachFromEPS_ServiceType
+
+} with {
+  variant "PRESENCE (messageType = '00010001'B)";
+}
+
+// 8.7
+type record SGsAP_IMSI_DETACH_ACK
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00010100'B)";
+}
+
+// 8.8
+type record SGsAP_IMSI_DETACH_INDICATION
+{
+  BIT8                                messageType,
+  IMSI                                iMSI,
+  MME_Name                            mME_Name,
+  IMSI_DetachFromNonEPS_ServiceType   iMSI_DetachFromNonEPS_ServiceType
+
+} with {
+  variant "PRESENCE (messageType = '00010011'B)";
+}
+
+// 8.9
+type record SGsAP_LOCATION_UPDATE_ACCEPT
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  LocationAreaId               locationAreaId,
+  MobileIdentity               newTMSIorIMSI optional
+} with {
+  variant "PRESENCE (messageType = '00001010'B)";
+}
+
+// 8.10
+type record SGsAP_LOCATION_UPDATE_REJECT
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  RejectCause                  rejectCause,
+  LocationAreaId               locationAreaId optional
+} with {
+  variant "PRESENCE (messageType = '00001011'B)";
+}
+
+// 8.11
+type record SGsAP_LOCATION_UPDATE_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  MME_Name                     mME_Name,
+  EPS_LocationUpdateType       ePS_LocationUpdateType,
+  LocationAreaId               newLocationAreaId,
+  LocationAreaId               oldLocationAreaId optional,
+  TMSI_Status                  tMSI_Status optional,
+  IMEI_SV                      iMEI_SV optional,
+  TrackingAreaIdentity         tAI optional,
+  E_UTRAN_CellGlobalIdentity   eCGI optional,
+  TMSI_basedNRI                tMSI_NRI optional,
+  CS_DomainOperator            cS_DomainOperator optional
+} with {
+  variant "PRESENCE (messageType = '00001001'B)";
+}
+
+// 8.12
+type record SGsAP_MM_INFORMATION_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  MM_Information               mM_Information
+} with {
+  variant "PRESENCE (messageType = '00011010'B)";
+}
+
+// 8.13
+type record SGsAP_PAGING_REJECT
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  SGsCause                     sGsCause
+} with {
+  variant "PRESENCE (messageType = '00000010'B)";
+}
+
+// 8.14
+type record SGsAP_PAGING_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  VLR_Name                     vLR_Name,
+  ServiceIndicator             serviceIndicator,
+  TMSI                         tMSI optional,
+  CLI                          cLI optional,
+  LocationAreaId               locationAreaId optional,
+  GlobalCN_Id                  globalCN_Id optional,
+  SS_Code                      sS_Code optional,
+  LCS_Indicator                lCS_Indicator optional,
+  LCS_ClientIdentity           lCS_ClientIdentity optional,
+  ChannelNeeded                channelNeeded optional,
+  EMLPP_Priority               eMLPP_Priority optional,
+  AdditionalPagingIndicators   additionalPagingIndicator optional
+} with {
+  variant "PRESENCE (messageType = '00000001'B)";
+}
+
+// 8.15
+type record SGsAP_RESET_ACK
+{
+  BIT8                         messageType,
+  MME_Name                     mME_Name optional,
+  VLR_Name                     vLR_Name optional
+} with {
+  variant "PRESENCE (messageType = '00010110'B)";
+}
+
+// 8.16
+type record SGsAP_RESET_INDICATION
+{
+  BIT8                         messageType,
+  MME_Name                     mME_Name optional,
+  VLR_Name                     vLR_Name optional
+} with {
+  variant "PRESENCE (messageType = '00010101'B)";
+}
+
+// 8.17
+type record SGsAP_SERVICE_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  ServiceIndicator             serviceIndicator,
+  IMEI_SV                      iMEI_SV optional,
+  UE_TimeZone                  uE_TimeZone optional,
+  MobileStationClassmark2      mobileStationClassmark2 optional,
+  TrackingAreaIdentity         tAI optional,
+  E_UTRAN_CellGlobalIdentity   eCGI optional,
+  UE_EMM_Mode                  uE_EMM_Mode optional
+} with {
+  variant "PRESENCE (messageType = '00000110'B)";
+}
+
+// 8.18
+type record SGsAP_STATUS
+{
+  BIT8                         messageType,
+  IMSI                         iMSI optional,
+  SGsCause                     sGsCause,
+  ErroneousMessage             erroneousMessage
+} with {
+  variant "PRESENCE (messageType = '00011101'B)";
+}
+
+// 8.19
+type record SGsAP_TMSI_REALLOCATION_COMPLETE
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00001100'B)";
+}
+
+// 8.20
+type record SGsAP_UE_ACTIVITY_INDICATION
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00010000'B)";
+}
+
+// 8.21
+type record SGsAP_UE_UNREACHABLE
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  SGsCause                     sGsCause
+} with {
+  variant "PRESENCE (messageType = '00011111'B)";
+}
+
+// 8.22
+type record SGsAP_UPLINK_UNITDATA
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  NAS_MessageContainer         nAS_MessageContainer,
+  IMEI_SV                      iMEI_SV optional,
+  UE_TimeZone                  uE_TimeZone optional,
+  MobileStationClassmark2      mobileStationClassmark2 optional,
+  TrackingAreaIdentity         tAI optional,
+  E_UTRAN_CellGlobalIdentity   eCGI optional
+} with {
+  variant "PRESENCE (messageType = '00001000'B)";
+}
+
+// 8.23
+type record SGsAP_RELEASE_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  SGsCause                     sGsCause optional
+} with {
+  variant "PRESENCE (messageType = '00011011'B)";
+}
+
+// 8.24
+type record SGsAP_SERVICE_ABORT_REQUEST
+{
+  BIT8                         messageType,
+  IMSI                         iMSI
+} with {
+  variant "PRESENCE (messageType = '00010111'B)";
+}
+
+// 8.25
+type record SGsAP_MO_CSFB_INDICATION
+{
+  BIT8                         messageType,
+  IMSI                         iMSI,
+  TrackingAreaIdentity         tAI optional,
+  E_UTRAN_CellGlobalIdentity   eCGI optional
+} with {
+  variant "PRESENCE (messageType = '00011000'B)";
+}
+
+type union PDU_SGsAP
+{
+  SGsAP_ALERT_ACK                    sGsAP_ALERT_ACK,
+  SGsAP_ALERT_REJECT                 sGsAP_ALERT_REJECT,
+  SGsAP_ALERT_REQUEST                sGsAP_ALERT_REQUEST,
+  SGsAP_DOWNLINK_UNITDATA            sGsAP_DOWNLINK_UNITDATA,
+  SGsAP_EPS_DETACH_ACK               sGsAP_EPS_DETACH_ACK,
+  SGsAP_EPS_DETACH_INDICATION        sGsAP_EPS_DETACH_INDICATION,
+  SGsAP_IMSI_DETACH_ACK              sGsAP_IMSI_DETACH_ACK,
+  SGsAP_IMSI_DETACH_INDICATION       sGsAP_IMSI_DETACH_INDICATION,
+  SGsAP_LOCATION_UPDATE_ACCEPT       sGsAP_LOCATION_UPDATE_ACCEPT,
+  SGsAP_LOCATION_UPDATE_REJECT       sGsAP_LOCATION_UPDATE_REJECT,
+  SGsAP_LOCATION_UPDATE_REQUEST      sGsAP_LOCATION_UPDATE_REQUEST,
+  SGsAP_MM_INFORMATION_REQUEST       sGsAP_MM_INFORMATION_REQUEST,
+  SGsAP_PAGING_REJECT                sGsAP_PAGING_REJECT,
+  SGsAP_PAGING_REQUEST               sGsAP_PAGING_REQUEST,
+  SGsAP_RESET_ACK                    sGsAP_RESET_ACK,
+  SGsAP_RESET_INDICATION             sGsAP_RESET_INDICATION,
+  SGsAP_SERVICE_REQUEST              sGsAP_SERVICE_REQUEST,
+  SGsAP_STATUS                       sGsAP_STATUS,
+  SGsAP_TMSI_REALLOCATION_COMPLETE   sGsAP_TMSI_REALLOCATION_COMPLETE,
+  SGsAP_UE_ACTIVITY_INDICATION       sGsAP_UE_ACTIVITY_INDICATION,
+  SGsAP_UE_UNREACHABLE               sGsAP_UE_UNREACHABLE,
+  SGsAP_UPLINK_UNITDATA              sGsAP_UPLINK_UNITDATA,
+  SGsAP_RELEASE_REQUEST              sGsAP_RELEASE_REQUEST,
+  SGsAP_SERVICE_ABORT_REQUEST        sGsAP_SERVICE_ABORT_REQUEST,
+  SGsAP_MO_CSFB_INDICATION           sGsAP_MO_CSFB_INDICATION
+} with { variant ""}
+
+} with { encode "RAW"}
