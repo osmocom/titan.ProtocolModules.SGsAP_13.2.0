@@ -289,7 +289,7 @@ type record MME_Name
 {
   BIT8                   iEI,
   LIN1                   lengthIndicator,
-  charstring             name
+  octetstring            name
 } with {
   variant "PRESENCE (iEI = '00001001'B)";
   variant (lengthIndicator) "LENGTHTO (name)"
@@ -678,7 +678,7 @@ type record VLR_Name
 {
   BIT8                       iEI,
   LIN1                       lengthIndicator,
-  charstring                 name
+  octetstring                name
 } with {
   variant "PRESENCE (iEI = '00000010'B)";
   variant (lengthIndicator) "LENGTHTO (name)"
